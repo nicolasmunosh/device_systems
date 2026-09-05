@@ -153,3 +153,109 @@ FastAPI permite construir APIs REST de forma rápida y segura. La integración c
 ![crear-usuario](<image/POST(crear-usuario).png>)
 ![usario-creado](<image/POST(usuario-creado).png>)
 ![error-400](<image/POST(error-400).png>)
+
+**GA1-220501096-01-AA1-EV08 – FastAPI Intermedio**
+
+---
+
+## Descripción v2
+
+Esta versión evoluciona la API inicial implementando CRUD completo, manejo profesional de errores, Dependency Injection y documentación automática con Swagger/OpenAPI.
+
+---
+
+## Nuevos endpoints v2
+
+| Método | Endpoint           | Código | Descripción                 |
+| ------ | ------------------ | ------ | --------------------------- |
+| PUT    | `/users/{user_id}` | 200    | Actualizar usuario completo |
+| PATCH  | `/users/{user_id}` | 200    | Actualizar usuario parcial  |
+| DELETE | `/users/{user_id}` | 204    | Eliminar usuario            |
+
+---
+
+## Códigos de estado HTTP
+
+| Código | Significado                                     |
+| ------ | ----------------------------------------------- |
+| 200    | OK - operación exitosa                          |
+| 201    | Created - usuario creado                        |
+| 204    | No Content - usuario eliminado                  |
+| 400    | Bad Request - correo duplicado o PATCH vacío    |
+| 404    | Not Found - usuario no existe                   |
+| 422    | Unprocessable Entity - datos inválidos Pydantic |
+
+---
+
+## Estructura v2
+
+device_systems/
+│── app/
+│ │── main.py
+│ │── routes/user_routes.py
+│ │── schemas/user_schema.py
+│ │── services/user_service.py
+│ │── dependencies/user_dependencies.py
+│ │── data/users_db.py
+
+---
+
+## Dependency Injection con Depends()
+
+Se implementaron dependencias reutilizables en `dependencies/user_dependencies.py`:
+
+- `get_user_or_404` → busca usuario por ID, lanza 404 si no existe
+- `validar_email_duplicado` → valida que el correo no esté repetido
+- `get_api_config` → retorna configuración general
+- `verificar_api_key` → simula autenticación por cabecera
+
+Ejemplo de uso:
+
+```python
+@router.get("/{user_id}")
+def obtener_usuario(usuario=Depends(get_user_or_404)):
+    return usuario
+```
+
+---
+
+## Manejo de errores
+
+| Error                    | Código |
+| ------------------------ | ------ |
+| Usuario no encontrado    | 404    |
+| Correo duplicado         | 400    |
+| PATCH sin datos          | 400    |
+| Datos inválidos Pydantic | 422    |
+
+---
+
+## Capturas Swagger UI v2
+
+![GET filtro](image/GET-filtro-role-isactive.png)
+![POST crear](image/POST-crear-201.png)
+![GET por ID](image/GET-id-usuario.png)
+![PUT actualizar](image/PUT-actualizar-200.png)
+![PATCH parcial](image/PATCH-parcial-200.png)
+![DELETE 204](image/DELETE-204-respuesta.png)
+![GET 404](image/GET-404-no-encontrado.png)
+![PATCH 400](image/PATCH-400-vacio.png)
+
+---
+
+## Reflexión final
+
+Evolucionar la API permitió entender cómo separar responsabilidades en capas. El uso de Dependency Injection evita repetir lógica y hace el código más limpio y mantenible.
+
+## PANTALLAZOS
+
+![GET-filtro-role-isactive](image/GET-filtro-role-isactive.png)
+![image/GET-id-usuario2](image/GET-id-usuario2.png)
+![image/GET-404-no-encontrado](image/GET-404-no-encontrado.png)
+![image/POST-crear-formulario](image/POST-crear-formulario.png)
+![image/POST-crear-201](image/POST-crear-201.png)
+![image/PATCH-parcial-200](image/PATCH-parcial-200.png)
+![image/PATCH-400-vacio](image/PATCH-400-vacio.png)
+![image/GET-id-usuario](image/GET-id-usuario.png)
+![image/DELETE-204-formulario](image/DELETE-204-formulario.png)
+![image/DELETE-204-respuesta](image/DELETE-204-respuesta.png)
