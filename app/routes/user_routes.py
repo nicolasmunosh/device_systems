@@ -10,7 +10,7 @@ router = APIRouter()
 
 # Base de datos simulada en memoria
 usuarios_db = [
-    {"id": 1, "name": "Carlos Admin",   "email": "carlos@mail.com",  "role": "admin",   "is_active": True},
+    {"id": 1, "name": "Camilo Admin",   "email": "carlos@mail.com",  "role": "admin",   "is_active": True},
     {"id": 2, "name": "Maria Support",  "email": "maria@mail.com",   "role": "support", "is_active": True},
     {"id": 3, "name": "Juan User",      "email": "juan@mail.com",    "role": "user",    "is_active": False},
     {"id": 4, "name": "Ana User",       "email": "ana@mail.com",     "role": "user",    "is_active": True},
