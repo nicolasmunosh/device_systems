@@ -352,3 +352,17 @@ Se inyecta en cada endpoint con `db: Session = Depends(get_db)` para abrir y cer
 ## Reflexión final
 
 Usar persistencia real con SQLAlchemy permite que los datos no se pierdan cuando el servidor se reinicia. El ORM facilita trabajar con la base de datos usando Python puro sin escribir SQL directamente, y la separación entre modelos SQLAlchemy y schemas Pydantic mantiene el código organizado y seguro.
+
+## PANTALLAZOS
+
+![EV09-POST-crear](image/EV09-POST-crear.png)
+![EV09-POST-email-duplicado](image/EV09-POST-email-duplicado.png)
+![GET-filtro-activo](image/EV09-GET-filtro-activo.png)
+![EV09-GET-404](image/EV09-GET-404.png)
+![EV09-GET-eliminado-404](image/EV09-GET-eliminado-404.png)
+![EV09-DELETE-404](image/EV09-DELETE-404.png)
+![EV09-GET-filtro-role](image/EV09-GET-filtro-role.png)
+![EV09-GET-id](image/EV09-GET-id.png)
+![EV09-GET-lista](image/EV09-GET-lista.png)
+![EV09-PATCH-parcial](image/EV09-PATCH-parcial.png)
+![EV09-PUT-actualizar](image/EV09-PUT-actualizar.png)
