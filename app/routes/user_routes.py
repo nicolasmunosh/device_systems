@@ -1,9 +1,10 @@
 # =============================================
-# routes/user_routes.py - CRUD completo
+# routes/user_routes.py - CRUD con base de datos
 # =============================================
 
 from fastapi import APIRouter, Response, Depends
 from typing import Optional
+from sqlalchemy.orm import Session
 
 from app.schemas.user_schema import UserCreate, UserUpdate, UserPatch, UserResponse
 from app.services.user_service import (
@@ -14,101 +15,109 @@ from app.services.user_service import (
     service_patch_usuario,
     service_eliminar_usuario,
 )
-from app.dependencies.user_dependencies import get_user_or_404
+from app.dependencies.database_dependency import get_db
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
 def add_headers(response: Response):
     response.headers["X-App-Name"]    = "device_systems"
-    response.headers["X-API-Version"] = "2.0.0"
+    response.headers["X-API-Version"] = "3.0.0"
 
 
-# ── GET /users ─────────────────────────────────────────────────────────────────
+# ── GET /users ─────────────────────────────────────────────
 @router.get(
     "",
     response_model=list[UserResponse],
     summary="Listar usuarios",
-    description="Retorna todos los usuarios. Permite filtrar por rol y estado activo.",
-    response_description="Lista de usuarios registrados"
+    description="Lista todos los usuarios. Filtra por rol y estado activo."
 )
 def listar_usuarios(
     response: Response,
+    db: Session = Depends(get_db),
     role: Optional[str] = None,
     is_active: Optional[bool] = None
 ):
     add_headers(response)
-    return service_listar_usuarios(role, is_active)
+    return service_listar_usuarios(db, role, is_active)
 
 
-# ── GET /users/{user_id} ───────────────────────────────────────────────────────
+# ── GET /users/{user_id} ───────────────────────────────────
 @router.get(
     "/{user_id}",
     response_model=UserResponse,
     summary="Obtener usuario por ID",
-    description="Retorna un usuario específico usando su ID como Path Parameter.",
-    response_description="Usuario encontrado"
+    description="Retorna un usuario por su ID."
 )
-def obtener_usuario(response: Response, usuario=Depends(get_user_or_404)):
+def obtener_usuario(
+    user_id: int,
+    response: Response,
+    db: Session = Depends(get_db)
+):
     add_headers(response)
-    return usuario
+    return service_obtener_usuario(db, user_id)
 
 
-# ── POST /users ────────────────────────────────────────────────────────────────
+# ── POST /users ────────────────────────────────────────────
 @router.post(
     "",
     response_model=UserResponse,
     status_code=201,
     summary="Crear usuario",
-    description="Registra un nuevo usuario. Valida datos con Pydantic y evita correos duplicados.",
-    response_description="Usuario creado exitosamente"
+    description="Registra un nuevo usuario en la base de datos."
 )
-def crear_usuario(usuario: UserCreate, response: Response):
+def crear_usuario(
+    usuario: UserCreate,
+    response: Response,
+    db: Session = Depends(get_db)
+):
     add_headers(response)
-    return service_crear_usuario(usuario)
+    return service_crear_usuario(db, usuario)
 
 
-# ── PUT /users/{user_id} ───────────────────────────────────────────────────────
+# ── PUT /users/{user_id} ───────────────────────────────────
 @router.put(
     "/{user_id}",
     response_model=UserResponse,
     summary="Actualizar usuario completo",
-    description="Reemplaza completamente la información de un usuario existente.",
-    response_description="Usuario actualizado"
+    description="Reemplaza completamente la información de un usuario."
 )
 def actualizar_usuario(
     user_id: int,
     usuario: UserUpdate,
-    response: Response
+    response: Response,
+    db: Session = Depends(get_db)
 ):
     add_headers(response)
-    return service_actualizar_usuario(user_id, usuario)
+    return service_actualizar_usuario(db, user_id, usuario)
 
 
-# ── PATCH /users/{user_id} ─────────────────────────────────────────────────────
+# ── PATCH /users/{user_id} ─────────────────────────────────
 @router.patch(
     "/{user_id}",
     response_model=UserResponse,
     summary="Actualizar usuario parcialmente",
-    description="Modifica solo los campos enviados. Si no se envía ningún campo retorna 400.",
-    response_description="Usuario actualizado parcialmente"
+    description="Modifica solo los campos enviados."
 )
 def patch_usuario(
     user_id: int,
     usuario: UserPatch,
-    response: Response
+    response: Response,
+    db: Session = Depends(get_db)
 ):
     add_headers(response)
-    return service_patch_usuario(user_id, usuario)
+    return service_patch_usuario(db, user_id, usuario)
 
 
-# ── DELETE /users/{user_id} ────────────────────────────────────────────────────
+# ── DELETE /users/{user_id} ────────────────────────────────
 @router.delete(
     "/{user_id}",
     status_code=204,
     summary="Eliminar usuario",
-    description="Elimina un usuario por su ID. Retorna 204 si fue eliminado, 404 si no existe.",
-    response_description="Usuario eliminado"
+    description="Elimina un usuario por su ID."
 )
-def eliminar_usuario(user_id: int):
-    service_eliminar_usuario(user_id)
+def eliminar_usuario(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    service_eliminar_usuario(db, user_id)

@@ -259,3 +259,110 @@ Evolucionar la API permitió entender cómo separar responsabilidades en capas. 
 ![image/GET-id-usuario](image/GET-id-usuario.png)
 ![image/DELETE-204-formulario](image/DELETE-204-formulario.png)
 ![image/DELETE-204-respuesta](image/DELETE-204-respuesta.png)
+
+**GA1-220501096-01-AA1-EV09 – FastAPI con SQLAlchemy**
+
+## Descripción v3
+
+Esta versión reemplaza el almacenamiento en memoria por una base de datos real usando SQLAlchemy con SQLite. Los usuarios ahora se persisten en `device_systems.db`.
+
+---
+
+## Nuevas dependencias
+
+```bash
+pip install sqlalchemy
+pip freeze > requirements.txt
+```
+
+---
+
+## Estructura v3
+
+device_systems/
+│── app/
+│ │── database/
+│ │ │── connection.py
+│ │── models/
+│ │ │── user_model.py
+│ │── schemas/
+│ │ │── user_schema.py
+│ │── services/
+│ │ │── user_service.py
+│ │── dependencies/
+│ │ │── database_dependency.py
+│ │── routes/
+│ │ │── user_routes.py
+│ │── main.py
+
+---
+
+## Diferencia entre modelo SQLAlchemy y schema Pydantic
+
+|                | Modelo SQLAlchemy                       | Schema Pydantic                                |
+| -------------- | --------------------------------------- | ---------------------------------------------- |
+| Archivo        | `models/user_model.py`                  | `schemas/user_schema.py`                       |
+| Para qué sirve | Representa la tabla en la base de datos | Valida los datos de entrada y salida de la API |
+| Dónde vive     | En la base de datos                     | En las peticiones HTTP                         |
+| Ejemplo        | `Column(String, nullable=False)`        | `name: str` con validadores                    |
+
+---
+
+## Dependencia get_db con Depends()
+
+```python
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+Se inyecta en cada endpoint con `db: Session = Depends(get_db)` para abrir y cerrar la sesión automáticamente.
+
+---
+
+## Modelo SQLAlchemy User
+
+| Campo      | Tipo     | Restricción                 |
+| ---------- | -------- | --------------------------- |
+| id         | Integer  | Primary Key                 |
+| name       | String   | nullable=False              |
+| email      | String   | unique=True, nullable=False |
+| role       | String   | nullable=False              |
+| is_active  | Boolean  | default=True                |
+| created_at | DateTime | default=datetime.utcnow     |
+
+---
+
+## Capturas Swagger UI v3
+
+![GET usuarios](image/GET-filtro-role-isactive.png)
+![POST crear](image/POST-crear-201.png)
+![GET por ID](image/GET-id-usuario.png)
+![PUT actualizar](image/PUT-actualizar-200.png)
+![PATCH parcial](image/PATCH-parcial-200.png)
+![DELETE 204](image/DELETE-204-respuesta.png)
+![GET 404](image/GET-404-no-encontrado.png)
+![PATCH 400](image/PATCH-400-vacio.png)
+
+---
+
+## Reflexión final
+
+Usar persistencia real con SQLAlchemy permite que los datos no se pierdan cuando el servidor se reinicia. El ORM facilita trabajar con la base de datos usando Python puro sin escribir SQL directamente, y la separación entre modelos SQLAlchemy y schemas Pydantic mantiene el código organizado y seguro.
+
+## PANTALLAZOS
+
+![EV09-POST-crear](image/EV09-POST-crear.png)
+![EV09-POST-email-duplicado](image/EV09-POST-email-duplicado.png)
+![GET-filtro-activo](image/EV09-GET-filtro-activo.png)
+![EV09-GET-404](image/EV09-GET-404.png)
+![EV09-GET-eliminado-404](image/EV09-GET-eliminado-404.png)
+![EV09-DELETE-404](image/EV09-DELETE-404.png)
+![EV09-GET-filtro-role](image/EV09-GET-filtro-role.png)
+![EV09-GET-id](image/EV09-GET-id.png)
+![EV09-GET-lista](image/EV09-GET-lista.png)
+![EV09-PATCH-parcial](image/EV09-PATCH-parcial.png)
+![EV09-PUT-actualizar](image/EV09-PUT-actualizar.png)
