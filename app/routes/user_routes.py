@@ -1,5 +1,5 @@
 # =============================================
-# routes/user_routes.py - CRUD con base de datos
+# routes/user_routes.py - CRUD usuarios + loans
 # =============================================
 
 from fastapi import APIRouter, Response, Depends
@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.schemas.user_schema import UserCreate, UserUpdate, UserPatch, UserResponse
+from app.schemas.loan_schema import LoanDetailResponse
 from app.services.user_service import (
     service_listar_usuarios,
     service_obtener_usuario,
@@ -15,6 +16,7 @@ from app.services.user_service import (
     service_patch_usuario,
     service_eliminar_usuario,
 )
+from app.services.loan_service import service_prestamos_usuario, _loan_to_detail
 from app.dependencies.database_dependency import get_db
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -22,102 +24,46 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 def add_headers(response: Response):
     response.headers["X-App-Name"]    = "device_systems"
-    response.headers["X-API-Version"] = "3.0.0"
+    response.headers["X-API-Version"] = "4.0.0"
 
 
-# ── GET /users ─────────────────────────────────────────────
-@router.get(
-    "",
-    response_model=list[UserResponse],
-    summary="Listar usuarios",
-    description="Lista todos los usuarios. Filtra por rol y estado activo."
-)
-def listar_usuarios(
-    response: Response,
-    db: Session = Depends(get_db),
-    role: Optional[str] = None,
-    is_active: Optional[bool] = None
-):
+@router.get("", response_model=list[UserResponse], summary="Listar usuarios")
+def listar_usuarios(response: Response, db: Session = Depends(get_db), role: Optional[str] = None, is_active: Optional[bool] = None):
     add_headers(response)
     return service_listar_usuarios(db, role, is_active)
 
 
-# ── GET /users/{user_id} ───────────────────────────────────
-@router.get(
-    "/{user_id}",
-    response_model=UserResponse,
-    summary="Obtener usuario por ID",
-    description="Retorna un usuario por su ID."
-)
-def obtener_usuario(
-    user_id: int,
-    response: Response,
-    db: Session = Depends(get_db)
-):
+@router.get("/{user_id}", response_model=UserResponse, summary="Obtener usuario por ID")
+def obtener_usuario(user_id: int, response: Response, db: Session = Depends(get_db)):
     add_headers(response)
     return service_obtener_usuario(db, user_id)
 
 
-# ── POST /users ────────────────────────────────────────────
-@router.post(
-    "",
-    response_model=UserResponse,
-    status_code=201,
-    summary="Crear usuario",
-    description="Registra un nuevo usuario en la base de datos."
-)
-def crear_usuario(
-    usuario: UserCreate,
-    response: Response,
-    db: Session = Depends(get_db)
-):
+@router.get("/{user_id}/loans", response_model=list[LoanDetailResponse], summary="Préstamos de un usuario")
+def prestamos_usuario(user_id: int, response: Response, db: Session = Depends(get_db)):
+    add_headers(response)
+    loans = service_prestamos_usuario(db, user_id)
+    return [_loan_to_detail(l) for l in loans]
+
+
+@router.post("", response_model=UserResponse, status_code=201, summary="Crear usuario")
+def crear_usuario(usuario: UserCreate, response: Response, db: Session = Depends(get_db)):
     add_headers(response)
     return service_crear_usuario(db, usuario)
 
 
-# ── PUT /users/{user_id} ───────────────────────────────────
-@router.put(
-    "/{user_id}",
-    response_model=UserResponse,
-    summary="Actualizar usuario completo",
-    description="Reemplaza completamente la información de un usuario."
-)
-def actualizar_usuario(
-    user_id: int,
-    usuario: UserUpdate,
-    response: Response,
-    db: Session = Depends(get_db)
-):
+@router.put("/{user_id}", response_model=UserResponse, summary="Actualizar usuario completo")
+def actualizar_usuario(user_id: int, usuario: UserUpdate, response: Response, db: Session = Depends(get_db)):
     add_headers(response)
     return service_actualizar_usuario(db, user_id, usuario)
 
 
-# ── PATCH /users/{user_id} ─────────────────────────────────
-@router.patch(
-    "/{user_id}",
-    response_model=UserResponse,
-    summary="Actualizar usuario parcialmente",
-    description="Modifica solo los campos enviados."
-)
-def patch_usuario(
-    user_id: int,
-    usuario: UserPatch,
-    response: Response,
-    db: Session = Depends(get_db)
-):
+@router.patch("/{user_id}", response_model=UserResponse, summary="Actualizar usuario parcial")
+def patch_usuario(user_id: int, usuario: UserPatch, response: Response, db: Session = Depends(get_db)):
     add_headers(response)
     return service_patch_usuario(db, user_id, usuario)
 
 
-# ── DELETE /users/{user_id} ────────────────────────────────
-@router.delete(
-    "/{user_id}",
-    status_code=204,
-    summary="Eliminar usuario",
-    description="Elimina un usuario por su ID."
-)
-def eliminar_usuario(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
+@router.delete("/{user_id}", status_code=204, summary="Eliminar usuario")
+def eliminar_usuario(user_id: int, db: Session = Depends(get_db)):
     service_eliminar_usuario(db, user_id)

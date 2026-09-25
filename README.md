@@ -366,3 +366,127 @@ Usar persistencia real con SQLAlchemy permite que los datos no se pierdan cuando
 ![EV09-GET-lista](image/EV09-GET-lista.png)
 ![EV09-PATCH-parcial](image/EV09-PATCH-parcial.png)
 ![EV09-PUT-actualizar](image/EV09-PUT-actualizar.png)
+
+**GA1-220501096-01-AA1-EV10 – Alembic, Relaciones y Consultas Avanzadas**
+
+---
+
+## Descripción
+
+Esta versión agrega persistencia relacional con tres modelos relacionados: User, Device y Loan. Se implementaron migraciones con Alembic, relaciones One-to-Many y consultas con joins y filtros avanzados.
+
+---
+
+## Nuevas dependencias
+
+```bash
+pip install alembic
+pip freeze > requirements.txt
+```
+
+---
+
+## Configuración de Alembic
+
+```bash
+alembic init alembic
+alembic revision --autogenerate -m "create devices and loans tables"
+alembic upgrade head
+alembic history
+```
+
+---
+
+## Nuevos recursos
+
+| Recurso              | Descripción                    |
+| -------------------- | ------------------------------ |
+| `/devices`           | CRUD completo de dispositivos  |
+| `/loans`             | Gestión de préstamos con joins |
+| `/users/{id}/loans`  | Préstamos de un usuario        |
+| `/loans/{id}/return` | Devolución de dispositivo      |
+
+---
+
+## Tabla de endpoints v4
+
+| Método | Endpoint             | Código | Descripción             |
+| ------ | -------------------- | ------ | ----------------------- |
+| GET    | `/devices`           | 200    | Listar dispositivos     |
+| POST   | `/devices`           | 201    | Crear dispositivo       |
+| GET    | `/devices/{id}`      | 200    | Obtener por ID          |
+| PUT    | `/devices/{id}`      | 200    | Actualizar completo     |
+| PATCH  | `/devices/{id}`      | 200    | Actualizar parcial      |
+| DELETE | `/devices/{id}`      | 204    | Eliminar                |
+| GET    | `/loans`             | 200    | Listar préstamos        |
+| POST   | `/loans`             | 201    | Crear préstamo          |
+| GET    | `/loans/details`     | 200    | Préstamos con detalle   |
+| PATCH  | `/loans/{id}/return` | 200    | Devolver dispositivo    |
+| GET    | `/users/{id}/loans`  | 200    | Préstamos de un usuario |
+
+---
+
+## Relaciones entre modelos
+
+User ──────── Loan ──────── Device
+(1) (N) (N) (1)
+un usuario muchos préstamos un dispositivo
+
+- `User` → `loans = relationship("Loan", back_populates="user")`
+- `Device` → `loans = relationship("Loan", back_populates="device")`
+- `Loan` → `ForeignKey("users.id")` y `ForeignKey("devices.id")`
+
+---
+
+## Consultas con joins
+
+```python
+query = db.query(Loan).options(
+    joinedload(Loan.user),
+    joinedload(Loan.device)
+).filter(Loan.status == status).all()
+```
+
+---
+
+## Filtros avanzados disponibles
+
+| Filtro      | Ejemplo                                  |
+| ----------- | ---------------------------------------- |
+| Por estado  | `GET /loans?status=active`               |
+| Por email   | `GET /loans?user_email=nicolas@mail.com` |
+| Por tipo    | `GET /loans?device_type=laptop`          |
+| Disponibles | `GET /devices?is_available=true`         |
+| Por marca   | `GET /devices?brand=lenovo`              |
+| Búsqueda    | `GET /devices?search=thinkpad`           |
+
+---
+
+## Capturas EV10
+
+![GET user loans](image/EV10-GET-user-loans.png)
+![POST device](image/EV10-POST-device.png)
+![GET devices disponibles](image/EV10-GET-devices-disponibles.png)
+![GET devices tipo](image/EV10-GET-devices-tipo.png)
+![POST loan](image/EV10-POST-loan.png)
+![GET loans detalle](image/EV10-GET-loans.png)
+![GET loans status](image/EV10-GET-loans-status.png)
+![PATCH return](image/EV10-PATCH-return.png)
+
+---
+
+## Reflexión final
+
+Alembic permite versionar los cambios de la base de datos de forma controlada, lo que facilita el trabajo en equipo y evita errores al evolucionar el esquema. Las relaciones entre modelos permiten construir consultas más poderosas con joins, y los filtros avanzados hacen la API mucho más flexible y útil para el frontend.
+
+![EV10-GET-device-disponible](image/EV10-GET-device-disponible.png)
+![EV10-GET-devices-disponibles](image/EV10-GET-devices-disponibles.png)
+![EV10-GET-devices-tipo](image/EV10-GET-devices-tipo.png)
+![EV10-GET-loans-status](image/EV10-GET-loans-status.png)
+![EV10-GET-loans](image/EV10-GET-loans.png)
+![EV10-GET-user-loans](image/EV10-GET-user-loans.png)
+![EV10-PATCH-return](image/EV10-PATCH-return.png)
+![EV10-POST-device](image/EV10-POST-device.png)
+![EV10-POST-loan-404](image/EV10-POST-loan-404.png)
+![EV10-POST-loan-409](image/EV10-POST-loan-409.png)
+![EV10-POST-loan](image/EV10-POST-loan.png)
