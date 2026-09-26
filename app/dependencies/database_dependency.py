@@ -1,12 +1,11 @@
 # =============================================
-# dependencies/database_dependency.py
+# dependencies/database_dependency.py - Sesión DB
 # =============================================
 
 from app.database.connection import SessionLocal
 
 
 def get_db():
-    """Entrega una sesión de base de datos y la cierra al terminar"""
     db = SessionLocal()
     try:
         yield db
