@@ -16,6 +16,7 @@ from app.services.device_service import (
     service_eliminar_dispositivo,
 )
 from app.dependencies.database_dependency import get_db
+from app.dependencies.auth_dependency import require_admin, require_admin_or_support
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
@@ -45,23 +46,44 @@ def obtener_dispositivo(device_id: int, response: Response, db: Session = Depend
 
 
 @router.post("", response_model=DeviceResponse, status_code=201, summary="Crear dispositivo")
-def crear_dispositivo(dispositivo: DeviceCreate, response: Response, db: Session = Depends(get_db)):
+def crear_dispositivo(
+    dispositivo: DeviceCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+    usuario_actual=Depends(require_admin_or_support),
+):
     add_headers(response)
     return service_crear_dispositivo(db, dispositivo)
 
 
 @router.put("/{device_id}", response_model=DeviceResponse, summary="Actualizar dispositivo completo")
-def actualizar_dispositivo(device_id: int, dispositivo: DeviceUpdate, response: Response, db: Session = Depends(get_db)):
+def actualizar_dispositivo(
+    device_id: int,
+    dispositivo: DeviceUpdate,
+    response: Response,
+    db: Session = Depends(get_db),
+    usuario_actual=Depends(require_admin_or_support),
+):
     add_headers(response)
     return service_actualizar_dispositivo(db, device_id, dispositivo)
 
 
 @router.patch("/{device_id}", response_model=DeviceResponse, summary="Actualizar dispositivo parcial")
-def patch_dispositivo(device_id: int, dispositivo: DevicePatch, response: Response, db: Session = Depends(get_db)):
+def patch_dispositivo(
+    device_id: int,
+    dispositivo: DevicePatch,
+    response: Response,
+    db: Session = Depends(get_db),
+    usuario_actual=Depends(require_admin_or_support),
+):
     add_headers(response)
     return service_patch_dispositivo(db, device_id, dispositivo)
 
 
 @router.delete("/{device_id}", status_code=204, summary="Eliminar dispositivo")
-def eliminar_dispositivo(device_id: int, db: Session = Depends(get_db)):
+def eliminar_dispositivo(
+    device_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual=Depends(require_admin),
+):
     service_eliminar_dispositivo(db, device_id)
