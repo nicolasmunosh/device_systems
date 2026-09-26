@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.user_model import User
-from app.schemas.auth_schema import UserRegister, UserLogin
+from app.schemas.auth_schema import UserRegister
 from app.auth.security import get_password_hash, verify_password, create_access_token
 
 
@@ -32,11 +32,11 @@ def service_registrar_usuario(db: Session, datos: UserRegister) -> User:
     return nuevo_usuario
 
 
-def service_autenticar_usuario(db: Session, datos: UserLogin) -> str:
+def service_autenticar_usuario(db: Session, email: str, password: str) -> str:
     """Valida credenciales y retorna un token JWT si son correctas."""
-    usuario = db.query(User).filter(User.email == datos.email).first()
+    usuario = db.query(User).filter(User.email == email).first()
 
-    if not usuario or not verify_password(datos.password, usuario.hashed_password):
+    if not usuario or not verify_password(password, usuario.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos",
