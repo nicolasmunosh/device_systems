@@ -2,7 +2,7 @@
 # routes/user_routes.py - CRUD usuarios + loans
 # =============================================
 
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Response, Depends, Request
 from typing import Optional
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,8 @@ from app.services.user_service import (
 )
 from app.services.loan_service import service_prestamos_usuario, _loan_to_detail
 from app.dependencies.database_dependency import get_db
+from app.dependencies.auth_dependency import get_current_active_user
+from app.core.limiter import limiter
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -28,13 +30,26 @@ def add_headers(response: Response):
 
 
 @router.get("", response_model=list[UserResponse], summary="Listar usuarios")
-def listar_usuarios(response: Response, db: Session = Depends(get_db), role: Optional[str] = None, is_active: Optional[bool] = None):
+@limiter.limit("30/minute")
+def listar_usuarios(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    role: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    usuario_actual=Depends(get_current_active_user),
+):
     add_headers(response)
     return service_listar_usuarios(db, role, is_active)
 
 
 @router.get("/{user_id}", response_model=UserResponse, summary="Obtener usuario por ID")
-def obtener_usuario(user_id: int, response: Response, db: Session = Depends(get_db)):
+def obtener_usuario(
+    user_id: int,
+    response: Response,
+    db: Session = Depends(get_db),
+    usuario_actual=Depends(get_current_active_user),
+):
     add_headers(response)
     return service_obtener_usuario(db, user_id)
 
